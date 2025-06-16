@@ -10,6 +10,7 @@ namespace Bookify.Domain.Bookings
         private Booking(Guid id, Guid apartmentId, Guid userId, DateRange duration, Money priceForPeriod, Money cleaningFee, Money ammentiesUpCharge, BookingStatus status, Money totalPrice, DateTime createdOnUtc)
             : base(id)
         {
+            BookingId = id;
             ApartmentId = apartmentId;
             UserId = userId;
             Duration = duration;
@@ -21,7 +22,7 @@ namespace Bookify.Domain.Bookings
             CreatedOnUtc = createdOnUtc;
         }
 
-
+        public Guid BookingId { get; private set; }
         public Guid ApartmentId { get; private set; }
         public Guid UserId { get; private set; }
         public DateRange Duration { get; private set; }

@@ -14,7 +14,7 @@
             if (domainEvent == null) throw new ArgumentNullException(nameof(domainEvent));
             _domainEvents.Add(domainEvent);
         }
-        public IReadOnlyList<IDomainEvent> GetDomainEvent()
+        public IReadOnlyList<IDomainEvent> GetDomainEvents()
         {
             return _domainEvents.ToList();
         }
