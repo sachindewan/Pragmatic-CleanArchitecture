@@ -1,21 +1,15 @@
 ﻿using FluentValidation;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Bookify.Application.Booking.ReserveBooking
+namespace Bookify.Application.Bookings.ReserveBooking;
+
+public class ReserveBookingCommandValidator : AbstractValidator<ReserveBookingCommand>
 {
-    public class ReserveBookingCommandValidator : AbstractValidator<ReserveBookingCommand>
+    public ReserveBookingCommandValidator()
     {
-        public ReserveBookingCommandValidator()
-        {
-            RuleFor(c=>c.UserId).NotEmpty().WithMessage("User ID must not be empty.");
-            RuleFor(c => c.ApartmentId).NotEmpty().WithMessage("Apartment ID must not be empty.");
-            RuleFor(c => c.StartDate)
-                .NotEmpty().WithMessage("Start date must not be empty.")
-                .LessThan(c => c.EndDate).WithMessage("Start date must be before end date.");
-        }
+        RuleFor(c => c.UserId).NotEmpty();
+
+        RuleFor(c => c.ApartmentId).NotEmpty();
+
+        RuleFor(c => c.StartDate).LessThan(c => c.EndDate);
     }
 }

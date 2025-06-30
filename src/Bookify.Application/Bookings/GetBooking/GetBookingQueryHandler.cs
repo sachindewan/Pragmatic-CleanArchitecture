@@ -1,50 +1,51 @@
 ﻿using Bookify.Application.Abstractions.Data;
+using Bookify.Application.Abstractions.Messaging;
 using Bookify.Domain.Abstractions;
 using Dapper;
-using MediatR;
 
-namespace Bookify.Application.Booking.GetBooking
+namespace Bookify.Application.Bookings.GetBooking;
+
+internal sealed class GetBookingQueryHandler : IQueryHandler<GetBookingQuery, BookingResponse>
 {
-    internal sealed class GetBookingQueryHandler : IRequestHandler<GetBookingQuery, Result<BookingResponse>>
+    private readonly ISqlConnectionFactory _sqlConnectionFactory;
+
+    public GetBookingQueryHandler(ISqlConnectionFactory sqlConnectionFactory)
     {
-        private readonly ISqlConnectionFactory _sqlConnectionFactory;
+        _sqlConnectionFactory = sqlConnectionFactory;
+    }
 
-        public GetBookingQueryHandler(ISqlConnectionFactory sqlConnectionFactory)
-        {
-            _sqlConnectionFactory = sqlConnectionFactory;
-        }
+    public async Task<Result<BookingResponse>> Handle(GetBookingQuery request, CancellationToken cancellationToken)
+    {
+        using var connection = _sqlConnectionFactory.CreateConnection();
 
-        public async Task<Result<BookingResponse>> Handle(GetBookingQuery request, CancellationToken cancellationToken)
-        {
-            using var connection = _sqlConnectionFactory.CreateConnection();
-            connection.Open();
-            var query = @"""
-                    SELECT 
-                          b.id as Id,
-                          b.apartment_id as ApartmentId,
-                          b.user_id as UserId,
-                          b.status as Status, 
-                          b.created_on_utc as CreatedOnUtc,
-                          b.duration_end as DurationEnd,
-                          b.duration_start as DurationStart,
-                          b.price_for_period_amount as PriceAmount,
-                          b.price_for_period_currency as PriceCurrency,
-                          b.cleaning_fee_amount as CleaningFeeAmount,
-                          b.cleaning_fee_currency as CleaningFeeCurrency,
-                          b.ammenties_up_charge_fee_amount as AmmentiesUpChargeFeeAmount,
-                          b.ammenties_up_charge_fee_currency as AmmentiesUpChargeFeeCurrency,
-                          b.total_price_amount as TotalPriceAmount,
-                          b.total_price_currency as TotalPriceCurrency
-                    FROM Bookings b
-                    WHERE b.Id = @BookingId""";
-            connection.Open();
-            var booking = connection.QueryFirstOrDefault<BookingResponse>(
-                query,
-                new
-                {
-                    BookingId = request.BookingId
-                });
-            return booking;
-        }
+        const string sql = """
+            SELECT
+                id AS Id,
+                apartment_id AS ApartmentId,
+                user_id AS UserId,
+                status AS Status,
+                price_for_period_amount AS PriceAmount,
+                price_for_period_currency AS PriceCurrency,
+                cleaning_fee_amount AS CleaningFeeAmount,
+                cleaning_fee_currency AS CleaningFeeCurrency,
+                amenities_up_charge_amount AS AmenitiesUpChargeAmount,
+                amenities_up_charge_currency AS AmenitiesUpChargeCurrency,
+                total_price_amount AS TotalPriceAmount,
+                total_price_currency AS TotalPriceCurrency,
+                duration_start AS DurationStart,
+                duration_end AS DurationEnd,
+                created_on_utc AS CreatedOnUtc
+            FROM bookings
+            WHERE id = @BookingId
+            """;
+
+        var booking = await connection.QueryFirstOrDefaultAsync<BookingResponse>(
+            sql,
+            new
+            {
+                request.BookingId
+            });
+
+        return booking;
     }
 }

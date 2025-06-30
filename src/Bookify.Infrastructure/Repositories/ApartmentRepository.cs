@@ -1,8 +1,8 @@
-﻿using Bookify.Domain.Appartments;
+﻿using Bookify.Domain.Apartments;
 
 namespace Bookify.Infrastructure.Repositories;
 
-internal sealed class ApartmentRepository : Repository<Apartment>,IAppartmentRepository
+internal sealed class ApartmentRepository : Repository<Apartment>, IApartmentRepository
 {
     public ApartmentRepository(ApplicationDbContext dbContext)
         : base(dbContext)

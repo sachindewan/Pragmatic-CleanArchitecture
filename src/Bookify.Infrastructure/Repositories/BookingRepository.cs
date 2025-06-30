@@ -1,4 +1,4 @@
-﻿using Bookify.Domain.Appartments;
+﻿using Bookify.Domain.Apartments;
 using Bookify.Domain.Bookings;
 using Microsoft.EntityFrameworkCore;
 

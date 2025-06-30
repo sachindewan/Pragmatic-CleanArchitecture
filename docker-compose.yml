@@ -1,30 +1,23 @@
+version: '3.4'
+
 services:
   bookify.api:
     image: ${DOCKER_REGISTRY-}bookifyapi
-    container_name: bookify.api
+    container_name: Bookify.Api
     build:
       context: .
-      dockerfile: Bookify.Api/Dockerfile
+      dockerfile: src/Bookify.Api/Dockerfile
     depends_on:
-      - bookify.db
-      - bookify.idp
+      - bookify-db
 
-  bookify.db:
+  bookify-db:
     image: postgres:latest
+    container_name: Bookify.Db
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - POSTGRES_USER=postgress
-      - POSTGRES_PASSWORD=postgress
-      - Postgres_DB=bookify 
-    ports:
-      - "5432:5432"
+      - POSTGRES_DB=bookify
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
     volumes:
-      - ./.container/database:/var/lib/postgresql/data
-
-  bookify.idp:
-    image: quay.io/keycloak/keycloak  
-    environment:
-      - KEYCLOAK_USER=admin
-      - KEYCLOAK_PASSWORD=admin
+      - ./.containers/database:/var/lib/postgresql/data
     ports:
-      - "8082:8080"
+      - 5432:5432

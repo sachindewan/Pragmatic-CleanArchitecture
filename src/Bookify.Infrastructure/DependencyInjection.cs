@@ -2,44 +2,52 @@
 using Bookify.Application.Abstractions.Data;
 using Bookify.Application.Abstractions.Email;
 using Bookify.Domain.Abstractions;
-using Bookify.Domain.Appartments;
+using Bookify.Domain.Apartments;
 using Bookify.Domain.Bookings;
 using Bookify.Domain.Users;
 using Bookify.Infrastructure.Clock;
 using Bookify.Infrastructure.Data;
 using Bookify.Infrastructure.Email;
 using Bookify.Infrastructure.Repositories;
+using Dapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Npgsql;
-namespace Bookify.Infrastructure
+
+namespace Bookify.Infrastructure;
+
+public static class DependencyInjection
 {
-    public static class DependencyInjection
+    public static IServiceCollection AddInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
-        public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+        services.AddTransient<IDateTimeProvider, DateTimeProvider>();
+
+        services.AddTransient<IEmailService, EmailService>();
+
+        var connectionString =
+            configuration.GetConnectionString("Database") ??
+            throw new ArgumentNullException(nameof(configuration));
+
+        services.AddDbContext<ApplicationDbContext>(options =>
         {
-            services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
-            services.AddTransient<IEmailService, EmailService>();
+            options.UseNpgsql(connectionString).UseSnakeCaseNamingConvention();
+        });
 
-            var connectionString = configuration.GetConnectionString("DefaultConnection")
-              ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+        services.AddScoped<IUserRepository, UserRepository>();
 
-            services.AddSingleton<ISqlConnectionFactory>(new SqlConnectionFactory(connectionString));
+        services.AddScoped<IApartmentRepository, ApartmentRepository>();
 
-            // register ef core db context or other infrastructure services here
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(connectionString).UseSnakeCaseNamingConvention());
+        services.AddScoped<IBookingRepository, BookingRepository>();
 
-            services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
-            services.AddScoped<IAppartmentRepository, ApartmentRepository>();
+        services.AddSingleton<ISqlConnectionFactory>(_ =>
+            new SqlConnectionFactory(connectionString));
 
-            services.AddScoped<IBookingRepository, BookingRepository>();
+        SqlMapper.AddTypeHandler(new DateOnlyTypeHandler());
 
-            services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
-
-            return services;
-        }
+        return services;
     }
 }

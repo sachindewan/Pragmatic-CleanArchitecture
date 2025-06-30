@@ -2,7 +2,6 @@
 using Bookify.Domain.Abstractions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System.Data;
 
 namespace Bookify.Infrastructure;
 

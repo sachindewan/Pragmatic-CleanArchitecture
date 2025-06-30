@@ -1,7 +1,6 @@
-﻿namespace Bookify.Application.Abstractions.Clock
+﻿namespace Bookify.Application.Abstractions.Clock;
+
+public interface IDateTimeProvider
 {
-    public interface IDateTimeProvider
-    {
-        public DateTime UtcNow { get;}
-    }
+    DateTime UtcNow { get; }
 }
