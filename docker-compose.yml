@@ -9,6 +9,8 @@ services:
       dockerfile: src/Bookify.Api/Dockerfile
     depends_on:
       - bookify-db
+    networks:
+      - bookify-net
 
   bookify-db:
     image: postgres:latest
@@ -21,3 +23,19 @@ services:
       - ./.containers/database:/var/lib/postgresql/data
     ports:
       - 5432:5432
+    networks:
+      - bookify-net
+
+  pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - "8080:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@bookify.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    networks:
+      - bookify-net
+
+networks:
+  bookify-net:
+   driver: bridge
