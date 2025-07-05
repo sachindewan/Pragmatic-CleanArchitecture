@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /.container/database
 /.containers/database
+/.containers/identity/h2
