@@ -10,6 +10,7 @@ services:
     depends_on:
       - bookify-db
       - bookify-idp
+      - bookify-seq
     networks:
       - bookify-net
 
@@ -51,6 +52,21 @@ services:
       PGADMIN_DEFAULT_PASSWORD: admin123
     networks:
       - bookify-net
+
+  bookify-seq:
+    image: datalust/seq:latest
+    container_name: Bookify.Seq
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_ADMINPASSWORD=Admin123
+    ports:
+      - 5341:5341
+      - 8081:80
+    networks:
+      - bookify-net
+    volumes:
+      - ./data:/data
+      
 
 networks:
   bookify-net:

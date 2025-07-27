@@ -364,3 +364,5 @@ FodyWeavers.xsd
 /.container/database
 /.containers/database
 /.containers/identity/h2
+/data
+/files/seq-data

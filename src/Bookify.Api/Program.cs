@@ -1,8 +1,27 @@
 using Bookify.Api.Extensions;
 using Bookify.Application;
 using Bookify.Infrastructure;
+using Microsoft.ApplicationInsights.Extensibility;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Ensure the required Application Insights package is installed:
+// Install-Package Microsoft.ApplicationInsights.AspNetCore
+
+//builder.Services.AddApplicationInsightsTelemetry();
+
+//enable logging sink to azure app insights
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration));
+    //.Enrich.FromLogContext()
+    //.WriteTo.Console()
+    //.WriteTo.Debug()
+    //.WriteTo.Seq(context.Configuration["Seq:ServerUrl"] ?? "http://localhost:5341")
+   // .WriteTo.ApplicationInsights(services.GetRequiredService<TelemetryConfiguration>(), TelemetryConverter.Traces));
+
+
+
 
 builder.Services.AddControllers();
 
@@ -26,7 +45,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseRequestContextLoggingHandler();
+app.UseSerilogRequestLogging();
 app.UseCustomExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
