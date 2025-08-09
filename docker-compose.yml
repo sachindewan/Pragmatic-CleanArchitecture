@@ -66,6 +66,15 @@ services:
       - bookify-net
     volumes:
       - ./data:/data
+
+  bookify-radis:
+    image: redis:latest
+    container_name: Bookify.Redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - bookify-net
       
 
 networks:
