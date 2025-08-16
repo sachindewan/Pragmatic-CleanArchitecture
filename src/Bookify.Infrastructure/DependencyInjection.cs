@@ -1,4 +1,5 @@
-﻿using Bookify.Application.Abstractions.Authentication;
+﻿using Asp.Versioning;
+using Bookify.Application.Abstractions.Authentication;
 using Bookify.Application.Abstractions.Caching;
 using Bookify.Application.Abstractions.Clock;
 using Bookify.Application.Abstractions.Data;
@@ -13,6 +14,7 @@ using Bookify.Infrastructure.Caching;
 using Bookify.Infrastructure.Clock;
 using Bookify.Infrastructure.Data;
 using Bookify.Infrastructure.Email;
+using Bookify.Infrastructure.Outbox;
 using Bookify.Infrastructure.Repositories;
 using Dapper;
 using Microsoft.AspNetCore.Authentication;
@@ -22,6 +24,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Quartz;
 using AuthenticationOptions = Bookify.Infrastructure.Authentication.AuthenticationOptions;
 using AuthenticationService = Bookify.Infrastructure.Authentication.AuthenticationService;
 using IAuthenticationService = Bookify.Application.Abstractions.Authentication.IAuthenticationService;
@@ -47,6 +50,9 @@ public static class DependencyInjection
         AddCaching(services, configuration);
 
         AddHealthChecks(services, configuration);
+
+        AddApiVersioning(services);
+        AddBackgroundJobs(services, configuration);
 
         return services;
     }
@@ -80,38 +86,38 @@ public static class DependencyInjection
     {
         services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
-            //.AddJwtBearer(options =>
-            //{
-            //    options.RequireHttpsMetadata = false;
-            //    options.MetadataAddress = configuration["Authentication:MetadataUrl"];
-            //    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-            //    {
-            //        ValidateIssuer = true,
-            //        ValidateAudience = true,
-            //        ValidateLifetime = true,
-            //        ValidIssuer = configuration["Authentication:ValidIssuer"],
-            //        ValidAudience = configuration["Authentication:Audience"],
-            //        ValidateIssuerSigningKey = true
-            //    };
-            //    options.Events = new JwtBearerEvents
-            //    {
-            //        OnTokenValidated = context =>
-            //        {
-            //            var claims = context.Principal?.Claims;
-            //            Console.WriteLine("=== Token Validated ===");
-            //            foreach (var claim in claims)
-            //            {
-            //                Console.WriteLine($"{claim.Type} : {claim.Value}");
-            //            }
-            //            return Task.CompletedTask;
-            //        },
-            //        OnAuthenticationFailed = context =>
-            //        {
-            //            Console.WriteLine("Auth failed: " + context.Exception.Message);
-            //            return Task.CompletedTask;
-            //        }
-            //    };
-            //});
+        //.AddJwtBearer(options =>
+        //{
+        //    options.RequireHttpsMetadata = false;
+        //    options.MetadataAddress = configuration["Authentication:MetadataUrl"];
+        //    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        //    {
+        //        ValidateIssuer = true,
+        //        ValidateAudience = true,
+        //        ValidateLifetime = true,
+        //        ValidIssuer = configuration["Authentication:ValidIssuer"],
+        //        ValidAudience = configuration["Authentication:Audience"],
+        //        ValidateIssuerSigningKey = true
+        //    };
+        //    options.Events = new JwtBearerEvents
+        //    {
+        //        OnTokenValidated = context =>
+        //        {
+        //            var claims = context.Principal?.Claims;
+        //            Console.WriteLine("=== Token Validated ===");
+        //            foreach (var claim in claims)
+        //            {
+        //                Console.WriteLine($"{claim.Type} : {claim.Value}");
+        //            }
+        //            return Task.CompletedTask;
+        //        },
+        //        OnAuthenticationFailed = context =>
+        //        {
+        //            Console.WriteLine("Auth failed: " + context.Exception.Message);
+        //            return Task.CompletedTask;
+        //        }
+        //    };
+        //});
 
         services.Configure<AuthenticationOptions>(configuration.GetSection("Authentication"));
 
@@ -155,9 +161,9 @@ public static class DependencyInjection
 
     private static void AddCaching(IServiceCollection services, IConfiguration configuration)
     {
-       var connectionString =
-            configuration.GetConnectionString("Cache") ??
-            throw new ArgumentNullException(nameof(configuration));
+        var connectionString =
+             configuration.GetConnectionString("Cache") ??
+             throw new ArgumentNullException(nameof(configuration));
         services.AddStackExchangeRedisCache(options =>
         {
             options.Configuration = connectionString;
@@ -165,12 +171,40 @@ public static class DependencyInjection
         services.AddSingleton<ICacheService, CacheService>();
     }
 
-    private static void AddHealthChecks(IServiceCollection services, IConfiguration configuration) {
+    private static void AddHealthChecks(IServiceCollection services, IConfiguration configuration)
+    {
 
         services.AddHealthChecks()
             .AddNpgSql(configuration.GetConnectionString("Database")!, name: "Database")
             .AddRedis(configuration.GetConnectionString("Cache")!, name: "Cache")
             .AddUrlGroup(new Uri(configuration["Keycloak:BaseUrl"]!), HttpMethod.Get, name: "Keycloak Metadata");
 
+    }
+
+    private static void AddApiVersioning(IServiceCollection services)
+    {
+
+        services.AddApiVersioning(options =>
+        {
+            options.DefaultApiVersion = new ApiVersion(1, 0);
+            options.ReportApiVersions = true;
+            options.ApiVersionReader = new UrlSegmentApiVersionReader();
+        })
+        .AddApiExplorer(options =>
+          {
+              options.GroupNameFormat = "'v'VVV";
+              options.SubstituteApiVersionInUrl = true;
+          });
+
+    }
+    private static void AddBackgroundJobs(IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<OutboxOptions>(configuration.GetSection("Outbox"));
+
+        services.AddQuartz();
+
+        services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
+
+        services.ConfigureOptions<ProcessOutboxMessagesJobSetup>();
     }
 }

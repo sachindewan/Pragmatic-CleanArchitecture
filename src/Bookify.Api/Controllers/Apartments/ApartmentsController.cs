@@ -1,4 +1,5 @@
-﻿using Bookify.Application.Apartments.SearchApartments;
+﻿using Asp.Versioning;
+using Bookify.Application.Apartments.SearchApartments;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace Bookify.Api.Controllers.Apartments;
 
 [ApiController]
-[Route("api/apartments")]
+[ApiVersion(1)]
+[ApiVersion(2)]
+[Route("api/v{version:apiVersion}/apartments")]
 public class ApartmentsController : ControllerBase
 {
     private readonly ISender _sender;
@@ -18,6 +21,7 @@ public class ApartmentsController : ControllerBase
 
     [HttpGet]
     [Authorize]
+    [MapToApiVersion(2)]
     public async Task<IActionResult> SearchApartments(
         DateOnly startDate,
         DateOnly endDate,
