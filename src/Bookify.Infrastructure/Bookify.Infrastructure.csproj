@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -22,6 +22,10 @@
     <PackageReference Include="Quartz.Extensions.Hosting" Version="3.15.0" />
   </ItemGroup>
 
+	<ItemGroup>
+		<InternalsVisibleTo Include="Bookify.Application.IntegrationTests"/>
+	</ItemGroup>
+	
   <ItemGroup>
     <ProjectReference Include="..\Bookify.Application\Bookify.Application.csproj" />
   </ItemGroup>
